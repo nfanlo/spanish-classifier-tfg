@@ -1,6 +1,10 @@
 # Mac Files filter
 .DS_Store
 
+# Filter local files that are too big
+my_tests/BETO/pytorch_model.bin
+my_tests/pytorch_weights.tar.gz
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
