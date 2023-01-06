@@ -9,9 +9,20 @@ Download commits from remote repository
 git pull origin main
 ```
 
+Upload commits from repository
+
+```
+git push origin main
+```
+
 Stage changes done in a file
 ```
 git add <filename>
+```
+
+Stage changes done in all files
+```
+git add -A
 ```
 
 Commit changes
