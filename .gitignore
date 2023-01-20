@@ -3,7 +3,11 @@
 
 # Filter local files that are too big
 my_tests/BETO/pytorch_model.bin
+<<<<<<< HEAD
 src/test-models/first-test/pytorch_weights.tar.gz
+=======
+my_tests/pytorch_weights.tar.gz
+>>>>>>> 3a34abdc588301a0c80b5a7f09ac390b61d15c72
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
