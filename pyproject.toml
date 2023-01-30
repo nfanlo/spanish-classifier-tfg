@@ -1,0 +1,49 @@
+[tool.poetry]
+name = "spanish-classifier"
+version = "0.1.0"
+description = ""
+authors = ["Various Authors"]
+readme = "README.md"
+packages = [{include = "spanishclassifier", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.9.7 || >3.9.7,<4.0"  # this is because the streamlit version
+datasets = "^2.8.0"
+pandas = "^1.4.4"
+streamlit = "^1.12.2"
+transformers = "^4.25.1"
+ipykernel = "^6.15.2"
+coloredlogs = "^15.0.1"
+evaluate = "^0.4.0"
+torch = "^1.13.1"
+scikit-learn = "^1.2.1"
+matplotlib = "^3.6.3"
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.8.0"
+flake8 = "^5.0.4"
+mypy = "^0.971"
+pytest = "^7.1.3"
+shellcheck-py = "^0.8.0.4"
+isort = "^5.10.1"
+pre-commit = "^2.20.0"
+autoflake = "^1.5.3"
+jupyter = "^1.0.0"
+jupyterlab = "^3.4.7"
+huggingface-hub = "^0.12.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
+target-version = ["py39"]
+
+[tool.poetry.scripts]
+dataset_cli = 'spanishclassifier.dataset_cli:main'
+train_cli = 'spanishclassifier.train_cli:main'
+infer_cli = 'spanishclassifier.infer_cli:main'
