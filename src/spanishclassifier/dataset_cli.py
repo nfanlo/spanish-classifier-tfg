@@ -174,7 +174,8 @@ def main():
 
     logger.info(f"Dataset samples from train split: {ds['train'][:13]}")
 
-    transformed_ds_dir=os.path.join(args.pipeline.trainsformed_data_dir, args.pipeline.dataset_config_name)
+    transformed_ds_filename = args.pipeline.dataset_config_name if not args.pipeline.perform_cleanup else f"{args.pipeline.dataset_config_name}-cleaned"
+    transformed_ds_dir=os.path.join(args.pipeline.trainsformed_data_dir, transformed_ds_filename)
     logger.info(f"Saving dataset in {transformed_ds_dir}")
     ds.save_to_disk(transformed_ds_dir)
 

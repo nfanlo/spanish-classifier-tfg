@@ -11,13 +11,15 @@ python = ">=3.8,<3.9.7 || >3.9.7,<4.0"  # this is because the streamlit version
 datasets = "^2.8.0"
 pandas = "^1.4.4"
 streamlit = "^1.12.2"
-transformers = "^4.25.1"
+transformers = "^4.26.0"
 ipykernel = "^6.15.2"
 coloredlogs = "^15.0.1"
 evaluate = "^0.4.0"
 torch = "^1.13.1"
 scikit-learn = "^1.2.1"
 matplotlib = "^3.6.3"
+git-lfs = "^1.6"
+huggingface-hub = "^0.12.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.8.0"
@@ -30,7 +32,6 @@ pre-commit = "^2.20.0"
 autoflake = "^1.5.3"
 jupyter = "^1.0.0"
 jupyterlab = "^3.4.7"
-huggingface-hub = "^0.12.0"
 
 [build-system]
 requires = ["poetry-core"]
