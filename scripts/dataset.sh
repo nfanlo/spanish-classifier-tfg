@@ -7,6 +7,10 @@ shift
 
 echo "Use cached ds: ${USE_CACHED_DS}"
 
+CLEAN_DS="${CLEAN_DS:-false}"
+
+echo "Cleaning DS? ${CLEAN_DS}"
+
 dataset_cli \
     --raw_data_dir "${HOME}/dev/spanish-classifier-tfg/dataset" \
     --transformed_data_dir "${TMPDIR}" \
@@ -14,5 +18,5 @@ dataset_cli \
     --dataset_config_name 60-20-20 \
     --files_have_header true \
     --target_labels_column_name labels \
-    --perform_cleanup true \
+    --perform_cleanup ${CLEAN_DS} \
     --use_cached_ds ${USE_CACHED_DS}

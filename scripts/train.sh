@@ -10,7 +10,7 @@ case ${MODEL_ID} in
     distilmulti)
         MODEL="distilbert-base-multilingual-cased";;
     distilbeto)
-        MODEL="dccuchile/distilbert-base-spanish-uncased ";;
+        MODEL="dccuchile/distilbert-base-spanish-uncased";;
     *)
         MODEL=${MODEL_ID};;
 esac
@@ -21,17 +21,26 @@ LR=5e-5
 MSL=72
 TRAIN_BS=8
 
-export EXP_NAME=tweet-sa-spanish-${MODEL}-ep_${EPOCHS}-lr_${LR}-msl_${MSL}-bs_${TRAIN_BS}
-export OUTPUT_DIR="${HOME}/dev/data/spanishclassfier_exp/${EXP_NAME}"
+SUB_DIR=`echo ${MODEL} | sed -r 's/\//-/'`-finetuned-with-spanish-tweets-clf
+
+HF_HUB_USER=francisco-perez-sorrosal
+HF_HUB_ID=${HF_HUB_USER}/${SUB_DIR}
+
+export EXP_NAME=ep_${EPOCHS}-lr_${LR}-msl_${MSL}-bs_${TRAIN_BS}
+export OUTPUT_DIR="${HOME}/dev/data/spanishclassfier_exp/${SUB_DIR}/${EXP_NAME}"
 export LOG_DEST=${OUTPUT_DIR}
 
 echo "Output dir: ${OUTPUT_DIR}"
 
+CLEAN_DS="${CLEAN_DS:-false}"
+
+echo "Using cleaned DS? ${CLEAN_DS}"
+
 train_cli \
-        --transformed_data_dir "/home3/fperez/yk/data/yahoo/Database/transformed_datasets_athlete_desc" \
         --log_level "debug" \
         --transformed_data_dir "${TMPDIR}" \
         --dataset_config_name 60-20-20 \
+        --use_cleaned ${CLEAN_DS} \
         --limited_record_count -1 \
         --output_dir "${OUTPUT_DIR}" \
         --model_name_or_path ${MODEL} \
@@ -55,3 +64,6 @@ train_cli \
         --load_best_model_at_end true \
         --early_stopping_patience 3 \
         --save_total_limit 2 \
+        --push_to_hub true \
+        --hub_model_id ${HF_HUB_ID} \
+        --hub_strategy checkpoint \

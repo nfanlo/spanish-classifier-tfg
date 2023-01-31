@@ -24,6 +24,10 @@ class TrainPipelineArguments:
         default="60-20-20"
     )
 
+    use_cleaned_ds: bool = field(
+        metadata={"help": "Whether to use the cleaned version of the dataset"}, default=False
+    )
+
     limited_record_count: Optional[int] = field(
         metadata={
             "help": "The number of records to process from the datases (default is -1, which means all records). Useful for testing/debug"
@@ -110,6 +114,10 @@ class InferPipelineArguments:
     dataset_config_name: str = field(
         metadata={"help": "The particular configuration of the dataset to use"},
         default="60-20-20"
+    )
+
+    use_cleaned_ds: bool = field(
+        metadata={"help": "Whether to use the cleaned version of the dataset"}, default=False
     )
 
     limited_record_count: Optional[int] = field(
