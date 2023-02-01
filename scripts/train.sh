@@ -21,7 +21,14 @@ LR=5e-5
 MSL=72
 TRAIN_BS=8
 
+CLEAN_DS="${CLEAN_DS:-false}"
+
+echo "Using cleaned DS? ${CLEAN_DS}"
+
 SUB_DIR=`echo ${MODEL} | sed -r 's/\//-/'`-finetuned-with-spanish-tweets-clf
+if [ "${CLEAN_DS}" = true ] ; then
+    SUB_DIR=${SUB_DIR}-cleaned-ds
+fi
 
 HF_HUB_USER=francisco-perez-sorrosal
 HF_HUB_ID=${HF_HUB_USER}/${SUB_DIR}
@@ -31,10 +38,6 @@ export OUTPUT_DIR="${HOME}/dev/data/spanishclassfier_exp/${SUB_DIR}/${EXP_NAME}"
 export LOG_DEST=${OUTPUT_DIR}
 
 echo "Output dir: ${OUTPUT_DIR}"
-
-CLEAN_DS="${CLEAN_DS:-false}"
-
-echo "Using cleaned DS? ${CLEAN_DS}"
 
 train_cli \
         --log_level "debug" \
