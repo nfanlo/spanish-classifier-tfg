@@ -13,6 +13,11 @@ from spanishclassifier import logger
 from spanishclassifier.utils.cli import get_cli_arguments, InferPipelineArguments, InferencingPipelineArguments
 from spanishclassifier.utils.metrics import ConfiguredMetric
 
+
+pd.set_option('display.max_columns', 10)
+pd.set_option('display.width', 1000)
+
+
 def main():
     logger.info("*" * 100)
     logger.info("Evaluator".center(100))
@@ -20,15 +25,23 @@ def main():
 
     args: InferencingPipelineArguments = get_cli_arguments((InferPipelineArguments, TrainingArguments), InferencingPipelineArguments, True)
     
+    transformed_datasets = {}
+
     start_t = time.time()
-    transformed_ds_filename = args.pipeline.dataset_config_name if not args.pipeline.use_cleaned_ds else f"{args.pipeline.dataset_config_name}-cleaned"
-    dataset_dir = os.path.join(args.pipeline.transformed_data_dir, transformed_ds_filename)
-    logger.info(f"Loading and tokenizing train/dev datasets from {dataset_dir}")
-    ds = load_from_disk(dataset_dir)
+    # Load the two possible datasets (dirty and cleaned)
+    for transformed_ds_filename in [args.pipeline.dataset_config_name, f"{args.pipeline.dataset_config_name}-cleaned"]:
+        dataset_dir = os.path.join(args.pipeline.transformed_data_dir, transformed_ds_filename)
+        logger.info(f"Loading and tokenizing train/dev datasets from {dataset_dir}")
+        ds = load_from_disk(dataset_dir)
+        if not dataset_dir.endswith("-cleaned"):
+            transformed_datasets['dirty'] = ds
+            logger.info(f"Dataset info (dirty):\n{ds}")
+        else:
+            transformed_datasets['cleaned'] = ds
+            logger.info(f"Dataset info (cleaned):\n{ds}")
+        logger.info(f"Sample of 10 transformed examples from test ds{' (cleaned):' if args.pipeline.use_cleaned_ds else ':'}\n{pformat(ds[args.pipeline.test_split_name][:10], width=200)}")
     end_load_t = time.time()
-    logger.info(f"Time to load dataset: {end_load_t-start_t}")
-    logger.info(f"Dataset info:\n{ds}")
-    logger.info(f"Sample of 10 transformed examples from test ds{' (cleaned):' if args.pipeline.use_cleaned_ds else ':'}\n{pformat(ds[args.pipeline.test_split_name][:10], width=200)}")
+    logger.info(f"Time to load datasets: {end_load_t-start_t}")
 
     ### Metrics setup
     metrics = evaluate.combine([
@@ -42,6 +55,9 @@ def main():
         "francisco-perez-sorrosal/distilbert-base-uncased-finetuned-with-spanish-tweets-clf",
         "francisco-perez-sorrosal/distilbert-base-multilingual-cased-finetuned-with-spanish-tweets-clf",
         "francisco-perez-sorrosal/dccuchile-distilbert-base-spanish-uncased-finetuned-with-spanish-tweets-clf",
+        "francisco-perez-sorrosal/distilbert-base-uncased-finetuned-with-spanish-tweets-clf-cleaned-ds",
+        "francisco-perez-sorrosal/distilbert-base-multilingual-cased-finetuned-with-spanish-tweets-clf-cleaned-ds",
+        "francisco-perez-sorrosal/dccuchile-distilbert-base-spanish-uncased-finetuned-with-spanish-tweets-clf-cleaned-ds",
     ]
 
     ds_label_info = ds[args.pipeline.test_split_name].features[args.pipeline.target_labels_column_name]
@@ -50,10 +66,11 @@ def main():
 
     results = []
     for model in models:
-        logger.info(f"Evaluating {model}...")
+        transformed_ds_id = "dirty" if not model.endswith("-cleaned-ds") else "cleaned"
+        logger.info(f"Evaluating {model} with {args.pipeline.dataset_config_name} ({transformed_ds_id}) dataset")
         test_results = task_evaluator.compute(
             model_or_pipeline=model,
-            data=ds[args.pipeline.test_split_name],
+            data=transformed_datasets[transformed_ds_id][args.pipeline.test_split_name],
             metric=metrics,
             label_column=args.pipeline.target_labels_column_name,
             label_mapping=ds_label_info._str2int
@@ -63,13 +80,12 @@ def main():
 
     df = pd.DataFrame(results, index=models)
     df[["accuracy", "f1", "precision", "recall", "total_time_in_seconds", "samples_per_second", "latency_in_seconds"]]
-    logger.info(df.head())
+    logger.info(f"Results:\n{df.head(10)}")
     
-    plot = radar_plot(data=results, model_names=models, invert_range=["latency_in_seconds"])
+    plot = radar_plot(data=results, model_names=[m.split("/")[1] for m in models], invert_range=["latency_in_seconds"], config={"legend_loc": "lower right"})
     radarplot_path = os.path.join(args.train.output_dir, "spanish-tweet-models-radarplot.png")
     logger.info(f"Saving Radar plot to: {radarplot_path}")
-    plot.savefig(radarplot_path)
-
+    plot.savefig(radarplot_path, bbox_inches='tight')
 
 
 if __name__ == "__main__":
