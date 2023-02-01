@@ -2,30 +2,23 @@
 
 source ${HOME}/dev/spanish-classifier-tfg/.venv/bin/activate
 
-MODEL_PATH=${1:-francisco-perez-sorrosal/distilbert-base-uncased-finetuned-with-spanish-tweets-clf}
-
-shift
-
 MSL=72
-TRAIN_BS=8
 
-export EXP_NAME=tweet-sa-spanish-distilbert-base-uncased-ep_4-lr_5e-5-msl_72-bs_8
-export OUTPUT_DIR="${HOME}/dev/data/spanishclassfier_exp/${EXP_NAME}"
+export OUTPUT_DIR="${HOME}/dev/data/spanishclassfier_exp/"
 export LOG_DEST=${OUTPUT_DIR}
-
-CLEAN_DS="${CLEAN_DS:-false}"
 
 echo "Model path: ${MODEL_PATH}"
 echo "Output dir: ${OUTPUT_DIR}"
 
-infer_cli \
+CLEAN_DS="${CLEAN_DS:-false}"
+
+evaluator_cli \
         --log_level "debug" \
         --transformed_data_dir "${TMPDIR}" \
         --dataset_config_name 60-20-20 \
         --use_cleaned ${CLEAN_DS} \
         --limited_record_count -1 \
         --output_dir "${OUTPUT_DIR}" \
-        --model_name_or_path ${MODEL_PATH} \
         --include_token_type_ids False \
         --test_split_name test \
         --problem_type single_label_classification \

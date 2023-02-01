@@ -7,7 +7,7 @@ import time
 from distutils.dir_util import copy_tree
 from dataclasses import dataclass, field
 from datasets import load_from_disk, DatasetDict
-from pprint import pprint
+from pprint import pprint, pformat
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, EarlyStoppingCallback, TrainingArguments, Trainer, TrainerCallback
 from typing import Dict, Optional
 
@@ -59,7 +59,7 @@ def main():
     logger.info(f"Time to load dataset: {end_load_t-start_t}")
     logger.info(f"Dataset info:\n{ds}")
 
-    logger.info(f"Sample of 10 transformed examples from train ds{' (cleaned):' if args.pipeline.use_cleaned_ds else ':'}\n{pprint(ds['train'][:10], width=20)}")
+    logger.info(f"Sample of 10 transformed examples from train ds{' (cleaned):' if args.pipeline.use_cleaned_ds else ':'}\n{pformat(ds['train'][:10], width=200)}")
     
     train_examples = len(ds[args.pipeline.train_split_name])
     if args.pipeline.limited_record_count != -1:
@@ -118,15 +118,16 @@ def main():
 
     trainer.train()
 
-    # if trainer.state.best_model_checkpoint is not None:
-    #     best_model_dest_path = f"{args.train.output_dir}/best_model"
-    #     logger.info(f"Copying best model from {trainer.state.best_model_checkpoint} to {best_model_dest_path}")
-    #     copy_tree(trainer.state.best_model_checkpoint, best_model_dest_path)
-    #     logger.info(f"Saving tokenizer to {best_model_dest_path}")
-    #     tokenizer.save_pretrained(best_model_dest_path)
+    if not args.train.push_to_hub and trainer.state.best_model_checkpoint is not None:
+        best_model_dest_path = f"{args.train.output_dir}/best_model"
+        logger.info(f"Copying best model from {trainer.state.best_model_checkpoint} to {best_model_dest_path}")
+        copy_tree(trainer.state.best_model_checkpoint, best_model_dest_path)
+        # logger.info(f"Saving tokenizer to {best_model_dest_path}")
+        # tokenizer.save_pretrained(best_model_dest_path)
     
-    logger.info("Pushing to hub")
-    trainer.push_to_hub()
+    if args.train.push_to_hub:
+        logger.info("Pushing to hub")
+        trainer.push_to_hub()
         
 
 if __name__ == "__main__":

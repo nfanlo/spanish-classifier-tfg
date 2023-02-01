@@ -48,3 +48,4 @@ target-version = ["py39"]
 dataset_cli = 'spanishclassifier.dataset_cli:main'
 train_cli = 'spanishclassifier.train_cli:main'
 infer_cli = 'spanishclassifier.infer_cli:main'
+evaluator_cli = 'spanishclassifier.evaluator_cli:main'
