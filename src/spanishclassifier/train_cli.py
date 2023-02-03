@@ -113,7 +113,7 @@ def main():
     config.dropout = args.pipeline.dropout  # - 0.2
     config.attention_dropout = args.pipeline.dropout  # - 0.2
     config.seq_classif_dropout = args.pipeline.dropout
-    config.n_layers = 5
+    config.n_layers = args.pipeline.distil_layers
 
     model = AutoModelForSequenceClassification.from_pretrained(args.pipeline.model_name_or_path, config=config)
 
