@@ -4,10 +4,10 @@ class ConfiguredMetric:
         self.metric = metric
         self.metric_args = metric_args
         self.metric_kwargs = metric_kwargs
-    
+
     def add(self, *args, **kwargs):
         return self.metric.add(*args, **kwargs)
-    
+
     def add_batch(self, *args, **kwargs):
         return self.metric.add_batch(*args, **kwargs)
 

@@ -1,36 +1,35 @@
 import dataclasses
 import json
 import os
+from dataclasses import dataclass, field
+from typing import Optional
 
 import datasets
 import matplotlib.pyplot as plt
 import pandas as pd
-
-from dataclasses import dataclass, field
-from datasets import load_dataset, Dataset  # type: ignore
+from datasets import Dataset, load_dataset  # type: ignore
 from transformers import AutoTokenizer
 from transformers.hf_argparser import HfArgumentParser
-from typing import List, Optional
 
 from spanishclassifier import logger
-from spanishclassifier.utils.filters import clean_html, remove_twitter_handles, remove_urls
+from spanishclassifier.utils.filters import (
+    clean_html,
+    remove_twitter_handles,
+    remove_urls,
+)
+
 
 @dataclass
 class DatasetPipelineArguments:
 
-    raw_data_dir: str = field(
-        metadata={"help": "The base directory that contains the raw data"},
-        default="./dataset"
-    )
+    raw_data_dir: str = field(metadata={"help": "The base directory that contains the raw data"}, default="./dataset")
 
     dataset_config_name: str = field(
-        metadata={"help": "The particular configuration of the dataset to use"},
-        default="60-20-20"
+        metadata={"help": "The particular configuration of the dataset to use"}, default="60-20-20"
     )
 
     trainsformed_data_dir: str = field(
-        metadata={"help": "The place where to save the transformed dataset"},
-        default=os.environ["TMPDIR"]
+        metadata={"help": "The place where to save the transformed dataset"}, default=os.environ["TMPDIR"]
     )
 
     files_have_header: bool = field(
@@ -106,9 +105,10 @@ def get_cli_arguments(print_args: bool = False) -> DatasetProcessingPipelineArgu
         logger.info(f"Non-processed Args:\n{remaining_strings}") if remaining_strings else None
     return cli_args
 
+
 def generate_basic_ds_stats(args, ds, transformed_ds_dir):
     logger.info("\n" + "*" * 100 + "\nBasic Dataset stats\n" + "*" * 100)
-    ds.set_format(type='pandas')
+    ds.set_format(type="pandas")
     train_df = ds[args.pipeline.train_split_name][:]
     dev_df = ds[args.pipeline.dev_split_name][:]
     test_df = ds[args.pipeline.test_split_name][:]
@@ -116,24 +116,26 @@ def generate_basic_ds_stats(args, ds, transformed_ds_dir):
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
     for dfn, df in [("train", train_df), ("dev", dev_df), ("test", test_df)]:
-        df['label_name'] = df['labels'].apply(lambda r: ds[args.pipeline.train_split_name].features['labels'].int2str(r))
-        df['label_name'].value_counts(ascending=True).plot.barh()
+        df["label_name"] = df["labels"].apply(
+            lambda r: ds[args.pipeline.train_split_name].features["labels"].int2str(r)
+        )
+        df["label_name"].value_counts(ascending=True).plot.barh()
         plt.title(f"Class Freq ({dfn} split)")
         path = os.path.join(transformed_ds_dir, f"{dfn}_class_freq.png")
         logger.info(f"Saving class freq plot to: {path}")
         plt.savefig(path)
         plt.close()
 
-        df['words_per_tweet'] = df['text'].str.split().apply(len)
-        df.boxplot("words_per_tweet", by='label_name', grid=False, showfliers=False)
+        df["words_per_tweet"] = df["text"].str.split().apply(len)
+        df.boxplot("words_per_tweet", by="label_name", grid=False, showfliers=False)
         plt.title(f"Words per Tweet ({dfn} split)")
         path = os.path.join(transformed_ds_dir, f"{dfn}_tweet_length_in_words.png")
         logger.info(f"Saving tweet length (words) plot to: {path}")
         plt.savefig(path)
         plt.close()
 
-        df['tokens_per_tweet'] = df['text'].apply(lambda t: len(tokenizer(t)['input_ids']))
-        df.boxplot("tokens_per_tweet", by='label_name', grid=False, showfliers=False)
+        df["tokens_per_tweet"] = df["text"].apply(lambda t: len(tokenizer(t)["input_ids"]))
+        df.boxplot("tokens_per_tweet", by="label_name", grid=False, showfliers=False)
         plt.title(f"Tokens per Tweet ({dfn} split)")
         path = os.path.join(transformed_ds_dir, f"{dfn}_tweet_length_in_tokens.png")
         logger.info(f"Saving tweet length (tokens) plot to: {path}")
@@ -152,13 +154,13 @@ def main():
     config_kwargs = {
         "data_dir": args.pipeline.raw_data_dir,
         "files_have_header": args.pipeline.files_have_header,
-        'train_file': "train.csv",
-        'dev_file': "dev.csv",
-        'test_file': "test.csv",
-        'train_split_name': args.pipeline.train_split_name,
-        'dev_split_name': args.pipeline.dev_split_name,
-        'test_split_name': args.pipeline.test_split_name, 
-        'limited_record_count': args.pipeline.limited_record_count,
+        "train_file": "train.csv",
+        "dev_file": "dev.csv",
+        "test_file": "test.csv",
+        "train_split_name": args.pipeline.train_split_name,
+        "dev_split_name": args.pipeline.dev_split_name,
+        "test_split_name": args.pipeline.test_split_name,
+        "limited_record_count": args.pipeline.limited_record_count,
     }
     logger.info("Loading dataset")
     if not args.pipeline.use_cached_ds:
@@ -174,13 +176,16 @@ def main():
 
     logger.info(f"Dataset samples from train split: {ds['train'][:13]}")
 
-    transformed_ds_filename = args.pipeline.dataset_config_name if not args.pipeline.perform_cleanup else f"{args.pipeline.dataset_config_name}-cleaned"
-    transformed_ds_dir=os.path.join(args.pipeline.trainsformed_data_dir, transformed_ds_filename)
+    transformed_ds_filename = (
+        args.pipeline.dataset_config_name
+        if not args.pipeline.perform_cleanup
+        else f"{args.pipeline.dataset_config_name}-cleaned"
+    )
+    transformed_ds_dir = os.path.join(args.pipeline.trainsformed_data_dir, transformed_ds_filename)
     logger.info(f"Saving dataset in {transformed_ds_dir}")
     ds.save_to_disk(transformed_ds_dir)
 
     generate_basic_ds_stats(args, ds, transformed_ds_dir)
-
 
 
 if __name__ == "__main__":
