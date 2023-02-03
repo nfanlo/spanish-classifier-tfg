@@ -1,8 +1,12 @@
 import datetime
+import openai
 import streamlit as st
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer, TextClassificationPipeline
 
 from spanishclassifier.utils.filters import *  
+
+
+openai.api_key = "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"
 
 st.sidebar.markdown("## Models loaded")
 
@@ -75,6 +79,7 @@ st.write('Last Updated = ', st.session_state.last_updated)
 form = st.form(key='sentiment-form')
 tweet_text = form.text_area('Enter your tweet text')
 clean_input = form.checkbox("Clean input text?")
+ask_chatgpt = form.checkbox("Ask ChatGPT too?")
 submit = form.form_submit_button('Submit')
 
 if submit:
@@ -102,3 +107,13 @@ if submit:
             st.warning(f'{label} sentiment (score: {score})')
         else:
             st.error(f'{label} sentiment (score: {score})')
+
+    if ask_chatgpt:
+        prompt=f"""
+        Classify the sentiment of the following tweet text into positive (P), neutral (NEU) or negative (N).
+        The tweet text will appear after the ":" symbol at the end of the paragraph. The result will contain
+        each label, either P, NEU or N and its corresponding softmax score, or probability with the following
+        format <LABEL>/<SCORE>: {tweet_text}
+        """
+        completion = openai.Completion.create(engine="text-davinci-003", prompt="What is the pandas library?", max_tokens=1000)
+        st.write(completion.choices[0]['text'])

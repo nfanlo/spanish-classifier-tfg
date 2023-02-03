@@ -30,10 +30,17 @@ if [ "${CLEAN_DS}" = true ] ; then
     SUB_DIR=${SUB_DIR}-cleaned-ds
 fi
 
+PUSH_TO_HUB="${PUSH_TO_HUB:-false}"
+
+echo "PUSH TO HUB? ${PUSH_TO_HUB}"
 HF_HUB_USER=francisco-perez-sorrosal
 HF_HUB_ID=${HF_HUB_USER}/${SUB_DIR}
 
-export EXP_NAME=ep_${EPOCHS}-lr_${LR}-msl_${MSL}-bs_${TRAIN_BS}
+DS_CONFIG="${DS_CONFIG:-60-20-20}"
+
+echo "DS Config: ${DS_CONFIG}"
+
+export EXP_NAME=ep_${EPOCHS}-lr_${LR}-msl_${MSL}-bs_${TRAIN_BS}-ds_config_${DS_CONFIG}_nl_3-do_04   
 export OUTPUT_DIR="${HOME}/dev/data/spanishclassfier_exp/${SUB_DIR}/${EXP_NAME}"
 export LOG_DEST=${OUTPUT_DIR}
 
@@ -42,7 +49,7 @@ echo "Output dir: ${OUTPUT_DIR}"
 train_cli \
         --log_level "debug" \
         --transformed_data_dir "${TMPDIR}" \
-        --dataset_config_name 60-20-20 \
+        --dataset_config_name ${DS_CONFIG} \
         --use_cleaned ${CLEAN_DS} \
         --limited_record_count -1 \
         --output_dir "${OUTPUT_DIR}" \
@@ -55,6 +62,7 @@ train_cli \
         --max_seq_length ${MSL} \
         --num_train_epoch ${EPOCHS} \
         --learning_rate ${LR} \
+        --dropout 0.3 \
         --per_device_train_batch_size ${TRAIN_BS} \
         --per_device_eval_batch_size $(( 4*TRAIN_BS )) \
         --logging_strategy epoch \
@@ -66,7 +74,8 @@ train_cli \
         --metric_for_best_model f1 \
         --load_best_model_at_end true \
         --early_stopping_patience 3 \
+        --resume_from_checkpoint false \
         --save_total_limit 2 \
-        --push_to_hub true \
+        --push_to_hub ${PUSH_TO_HUB} \
         --hub_model_id ${HF_HUB_ID} \
         --hub_strategy checkpoint \

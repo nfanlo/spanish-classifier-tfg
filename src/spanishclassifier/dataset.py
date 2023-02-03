@@ -115,6 +115,8 @@ class TweetDataset(datasets.GeneratorBasedBuilder):
     BUILDER_CONFIGS = [
         TweetDSConfig(name="60-20-20", version=VERSION, description="60-20-20 partition"),
         TweetDSConfig(name="70-15-15", version=VERSION, description="70-15-15 partition"),
+        TweetDSConfig(name="75-10-15", version=VERSION, description="75-10-15 partition"),
+        TweetDSConfig(name="80-10-10", version=VERSION, description="80-10-10 partition"),
     ]
 
     DEFAULT_CONFIG_NAME = (

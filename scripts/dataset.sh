@@ -11,11 +11,15 @@ CLEAN_DS="${CLEAN_DS:-false}"
 
 echo "Cleaning DS? ${CLEAN_DS}"
 
+DS_CONFIG="${DS_CONFIG:-60-20-20}"
+
+echo "DS Config: ${DS_CONFIG}"
+
 dataset_cli \
     --raw_data_dir "${HOME}/dev/spanish-classifier-tfg/dataset" \
     --transformed_data_dir "${TMPDIR}" \
     --limited_record_count -1 \
-    --dataset_config_name 60-20-20 \
+    --dataset_config_name ${DS_CONFIG} \
     --files_have_header true \
     --target_labels_column_name labels \
     --perform_cleanup ${CLEAN_DS} \

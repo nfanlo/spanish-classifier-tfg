@@ -8,7 +8,7 @@ from distutils.dir_util import copy_tree
 from dataclasses import dataclass, field
 from datasets import load_from_disk, DatasetDict
 from pprint import pprint, pformat
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, EarlyStoppingCallback, TrainingArguments, Trainer, TrainerCallback
+from transformers import AutoConfig,AutoModelForSequenceClassification, AutoTokenizer, EarlyStoppingCallback, TrainingArguments, Trainer, TrainerCallback
 from typing import Dict, Optional
 
 from spanishclassifier import logger
@@ -72,7 +72,17 @@ def main():
     logger.info(f"Tokenized sample:\n{train_tokenized_ds[:1]}")
 
     model_extra_config = build_model_extra_config(args, args.pipeline.train_split_name, ds)
-    model = AutoModelForSequenceClassification.from_pretrained(args.pipeline.model_name_or_path, **model_extra_config)
+    config=AutoConfig.from_pretrained(args.pipeline.model_name_or_path, **model_extra_config)
+    config.dropout=args.pipeline.dropout #- 0.2
+    config.attention_dropout=args.pipeline.dropout #- 0.2
+    config.seq_classif_dropout=args.pipeline.dropout
+    config.n_layers=4
+
+    model = AutoModelForSequenceClassification.from_pretrained(args.pipeline.model_name_or_path, config=config)
+
+    logger.info(f"Model config\n{model.config}")
+
+    logger.info(f"Model\n{model}")
 
     ### Metrics setup
     # f1 = evaluate.load("f1")
@@ -116,7 +126,14 @@ def main():
         callbacks=callbacks,
     )
 
-    trainer.train()
+    resume_from_checkpoint = args.train.resume_from_checkpoint
+    if resume_from_checkpoint is None or args.train.resume_from_checkpoint == 'false' or args.train.resume_from_checkpoint == 'False':
+        resume_from_checkpoint = False
+    if resume_from_checkpoint == 'true' or args.train.resume_from_checkpoint == 'True':
+        resume_from_checkpoint = True
+    
+    logger.warning(f"Resuming from the last checkpoint: {resume_from_checkpoint}")
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
     if not args.train.push_to_hub and trainer.state.best_model_checkpoint is not None:
         best_model_dest_path = f"{args.train.output_dir}/best_model"
