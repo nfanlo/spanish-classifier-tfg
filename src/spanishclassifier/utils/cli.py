@@ -72,7 +72,12 @@ class TrainPipelineArguments:
 
     dropout: float = field(
         default=0.1,
-        metadata={"help": ("The default dropout for.")},
+        metadata={"help": ("The default dropout to use in Distilbert layers and classifier. For overfitting purposes")},
+    )
+
+    distil_layers: int = field(
+        default=6,
+        metadata={"help": ("Number of layers to use in Distilbert. For overfitting purposes")},
     )
 
     early_stopping_patience: int = field(
