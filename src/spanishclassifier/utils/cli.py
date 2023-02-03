@@ -49,7 +49,7 @@ class TrainPipelineArguments:
 
     problem_type: str = field(
         metadata={"help": "regression | single_label_classification | multi_label_classification"},
-        default="multi_label_classification",
+        default="single_label_classification",
     )
 
     # Model-input-related parameters
@@ -68,6 +68,15 @@ class TrainPipelineArguments:
             "help": (
                 "The maximum total input sequence length after tokenization. Sequences longer "
                 "than this will be truncated, sequences shorter will be padded."
+            )
+        },
+    )
+
+    dropout: float = field(
+        default=0.1,
+        metadata={
+            "help": (
+                "The default dropout for."
             )
         },
     )
@@ -139,7 +148,7 @@ class InferPipelineArguments:
 
     problem_type: str = field(
         metadata={"help": "regression | single_label_classification | multi_label_classification"},
-        default="multi_label_classification",
+        default="single_label_classification",
     )
 
     # Model-input-related parameters
