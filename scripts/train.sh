@@ -42,7 +42,17 @@ DS_CONFIG="${DS_CONFIG:-60-20-20}"
 
 echo "DS Config: ${DS_CONFIG}"
 
-export EXP_NAME=ep_${EPOCHS}-lr_${LR}-msl_${MSL}-bs_${TRAIN_BS}-ds_config_${DS_CONFIG}_nl_5-do_03
+# Overfitting parameters
+
+DROPOUT="${DROPOUT:0.1}"
+
+echo "DROPOUT: ${DROPOUT}"
+
+DISTIL_LAYERS="${DISTIL_LAYERS:6}"
+
+echo "Distilbert Layers: ${DISTIL_LAYERS}"
+
+export EXP_NAME=ep_${EPOCHS}-lr_${LR}-msl_${MSL}-bs_${TRAIN_BS}-ds_config_${DS_CONFIG}-nl_${DISTIL_LAYERS}-do_${DROPOUT}
 export OUTPUT_DIR="${HOME}/dev/data/spanishclassfier_exp/${SUB_DIR}/${EXP_NAME}"
 export LOG_DEST=${OUTPUT_DIR}
 
@@ -64,7 +74,8 @@ train_cli \
         --max_seq_length ${MSL} \
         --num_train_epoch ${EPOCHS} \
         --learning_rate ${LR} \
-        --dropout 0.3 \
+        --dropout "${DROPOUT}" \
+        --distil_layers "${DISTIL_LAYERS}" \
         --per_device_train_batch_size ${TRAIN_BS} \
         --per_device_eval_batch_size $(( 4*TRAIN_BS )) \
         --logging_strategy epoch \
