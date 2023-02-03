@@ -17,8 +17,14 @@ case ${MODEL_ID} in
 esac
 shift
 
-EPOCHS=4
-LR=5e-5
+EPOCHS="${EPOCHS:-4}"
+
+echo "Using ${EPOCHS} epochs"
+
+LR="${LR:-5e-5}"
+
+echo "Using ${LR} as learning rate"
+
 MSL=72
 TRAIN_BS=8
 
@@ -72,8 +78,8 @@ train_cli \
         --target_labels_column_name labels \
         --label_names labels \
         --max_seq_length ${MSL} \
-        --num_train_epoch ${EPOCHS} \
-        --learning_rate ${LR} \
+        --num_train_epoch "${EPOCHS}" \
+        --learning_rate "${LR}" \
         --dropout "${DROPOUT}" \
         --distil_layers "${DISTIL_LAYERS}" \
         --per_device_train_batch_size ${TRAIN_BS} \
