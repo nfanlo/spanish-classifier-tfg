@@ -17,9 +17,9 @@
 import csv
 import os
 import sys
+from typing import Optional
 
 import datasets
-from typing import Optional
 
 csv.field_size_limit(sys.maxsize)
 
@@ -52,8 +52,8 @@ _CLASS_NAMES = ["P", "NEU", "N"]
 
 logger = datasets.utils.logging.get_logger()
 
-class TweetDSConfig(datasets.BuilderConfig):
 
+class TweetDSConfig(datasets.BuilderConfig):
     def __init__(self, features=["text", "labels"], label_classes=_CLASS_NAMES, **kwargs):
         """BuilderConfig for SuperGLUE.
 
@@ -162,7 +162,7 @@ class TweetDataset(datasets.GeneratorBasedBuilder):
             features=datasets.Features(
                 {
                     "text": datasets.Value("string"),
-                    "labels": datasets.ClassLabel(num_classes=len(_CLASS_NAMES), names=_CLASS_NAMES)
+                    "labels": datasets.ClassLabel(num_classes=len(_CLASS_NAMES), names=_CLASS_NAMES),
                 }
             ),
             # If there's a common (input, target) tuple from the features,
@@ -195,10 +195,14 @@ class TweetDataset(datasets.GeneratorBasedBuilder):
         """Returns SplitGenerators."""
         return [
             self._get_split_generator(
-                datasets.Split.TRAIN, os.path.join(self.data_dir, self.config.name, self.train_file), self.train_split_name
+                datasets.Split.TRAIN,
+                os.path.join(self.data_dir, self.config.name, self.train_file),
+                self.train_split_name,
             ),
             self._get_split_generator(
-                datasets.NamedSplit(self.dev_split_name), os.path.join(self.data_dir, self.config.name, self.dev_file), self.dev_split_name
+                datasets.NamedSplit(self.dev_split_name),
+                os.path.join(self.data_dir, self.config.name, self.dev_file),
+                self.dev_split_name,
             ),
             self._get_split_generator(
                 datasets.Split.TEST, os.path.join(self.data_dir, self.config.name, self.test_file), self.test_split_name

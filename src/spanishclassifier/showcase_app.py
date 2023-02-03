@@ -1,20 +1,31 @@
 import datetime
+
 import openai
 import streamlit as st
-from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer, TextClassificationPipeline
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    TextClassificationPipeline,
+    pipeline,
+)
 
-from spanishclassifier.utils.filters import *  
-
+from spanishclassifier.utils.filters import (
+    clean_html,
+    remove_twitter_handles,
+    remove_urls,
+)
 
 openai.api_key = "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"
 
 st.sidebar.markdown("## Models loaded")
 
 
-st.title('Sentiment Analys for Spanish Tweets!')
-st.write('I use the Hugging Face Transformers library to clasify the sentiment \
+st.title("Sentiment Analys for Spanish Tweets!")
+st.write(
+    "I use the Hugging Face Transformers library to clasify the sentiment \
     of tweets passed as input as postive, neutral or negative. \
-    This app is built using [Streamlit](https://docs.streamlit.io/en/stable/getting_started.html).')
+    This app is built using [Streamlit](https://docs.streamlit.io/en/stable/getting_started.html)."
+)
 
 models = [
     "francisco-perez-sorrosal/distilbert-base-uncased-finetuned-with-spanish-tweets-clf",
@@ -31,27 +42,32 @@ if "pipelines" not in st.session_state:
     st.session_state.pipelines = []
     for model in models:
         with st.spinner(f"Loading model {model}"):
-             pipe = pipeline(
-                'text-classification', 
+            pipe = pipeline(
+                "text-classification",
                 model=AutoModelForSequenceClassification.from_pretrained(model),
                 tokenizer=AutoTokenizer.from_pretrained(model),
-                return_all_scores=True)
+                return_all_scores=True,
+            )
         st.sidebar.subheader(pipe.model.config.name_or_path)
         st.sidebar.write(f"Tokenizer:\n{pipe.tokenizer}")
         st.sidebar.write(f"Model:\n{pipe.model.config}")
         st.session_state.pipelines.append(pipe)
         if not load_all_models:
             break
-    st.session_state.last_updated = datetime.time(0,0)
+    st.session_state.last_updated = datetime.time(0, 0)
 
-def update_model(model_id,):
+
+def update_model(
+    model_id,
+):
     st.session_state.pipelines = []
     if not load_all_models:
         pipe = pipeline(
-            'text-classification', 
+            "text-classification",
             model=AutoModelForSequenceClassification.from_pretrained(model_id),
             tokenizer=AutoTokenizer.from_pretrained(model_id),
-            return_all_scores=True)
+            return_all_scores=True,
+        )
         st.sidebar.subheader(pipe.model.config.name_or_path)
         st.sidebar.write(f"Tokenizer:\n{pipe.tokenizer}")
         st.sidebar.write(f"Model:\n{pipe.model.config}")
@@ -60,27 +76,28 @@ def update_model(model_id,):
         for model in models:
             with st.spinner(f"Loading model {model}"):
                 pipe = pipeline(
-                    'text-classification', 
+                    "text-classification",
                     model=AutoModelForSequenceClassification.from_pretrained(model),
                     tokenizer=AutoTokenizer.from_pretrained(model),
-                    return_all_scores=True)
+                    return_all_scores=True,
+                )
                 st.sidebar.subheader(pipe.model.config.name_or_path)
                 st.sidebar.write(f"Tokenizer:\n{pipe.tokenizer}")
-                st.sidebar.write(f"Model:\n{pipe.model.config}")                    
+                st.sidebar.write(f"Model:\n{pipe.model.config}")
             st.session_state.pipelines.append(pipe)
     st.session_state.last_updated = datetime.datetime.now().time()
 
+
 model_id = st.selectbox(f"Choose a model {load_all_models}", models)
 st.button("Load model/s", on_click=update_model, args=(model_id,))
-st.write('Last Updated = ', st.session_state.last_updated)
+st.write("Last Updated = ", st.session_state.last_updated)
 
 
-
-form = st.form(key='sentiment-form')
-tweet_text = form.text_area('Enter your tweet text')
+form = st.form(key="sentiment-form")
+tweet_text = form.text_area("Enter your tweet text")
 clean_input = form.checkbox("Clean input text?")
 ask_chatgpt = form.checkbox("Ask ChatGPT too?")
-submit = form.form_submit_button('Submit')
+submit = form.form_submit_button("Submit")
 
 if submit:
     if clean_input:
@@ -93,27 +110,29 @@ if submit:
         st.subheader(f"Model\n{classifier.model.config.name_or_path}")
         result = classifier(tweet_text)
         st.json(result, expanded=False)
-        predictions=result[0]
+        predictions = result[0]
         label = "N/A"
         score = -1
         for p in predictions:
-            if p['score'] > score:
-                label = p['label']
-                score = p['score']
+            if p["score"] > score:
+                label = p["label"]
+                score = p["score"]
 
-        if label == 'P':
-            st.success(f'{label} sentiment (score: {score})')
+        if label == "P":
+            st.success(f"{label} sentiment (score: {score})")
         elif label == "NEU":
-            st.warning(f'{label} sentiment (score: {score})')
+            st.warning(f"{label} sentiment (score: {score})")
         else:
-            st.error(f'{label} sentiment (score: {score})')
+            st.error(f"{label} sentiment (score: {score})")
 
     if ask_chatgpt:
-        prompt=f"""
+        prompt = f"""
         Classify the sentiment of the following tweet text into positive (P), neutral (NEU) or negative (N).
         The tweet text will appear after the ":" symbol at the end of the paragraph. The result will contain
         each label, either P, NEU or N and its corresponding softmax score, or probability with the following
         format <LABEL>/<SCORE>: {tweet_text}
         """
-        completion = openai.Completion.create(engine="text-davinci-003", prompt="What is the pandas library?", max_tokens=1000)
-        st.write(completion.choices[0]['text'])
+        completion = openai.Completion.create(
+            engine="text-davinci-003", prompt="What is the pandas library?", max_tokens=1000
+        )
+        st.write(completion.choices[0]["text"])

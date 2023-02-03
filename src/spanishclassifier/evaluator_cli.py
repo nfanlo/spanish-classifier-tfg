@@ -1,21 +1,29 @@
-import evaluate
 import os
-import pandas as pd
 import time
+from pprint import pformat
 
+import evaluate
+import pandas as pd
 from datasets import load_from_disk
 from evaluate import evaluator
 from evaluate.visualization import radar_plot
-from pprint import pprint, pformat
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, TrainingArguments, pipeline
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    TrainingArguments,
+    pipeline,
+)
 
 from spanishclassifier import logger
-from spanishclassifier.utils.cli import get_cli_arguments, InferPipelineArguments, InferencingPipelineArguments
+from spanishclassifier.utils.cli import (
+    InferencingPipelineArguments,
+    InferPipelineArguments,
+    get_cli_arguments,
+)
 from spanishclassifier.utils.metrics import ConfiguredMetric
 
-
-pd.set_option('display.max_columns', 10)
-pd.set_option('display.width', 1000)
+pd.set_option("display.max_columns", 10)
+pd.set_option("display.width", 1000)
 
 
 def main():
@@ -23,8 +31,10 @@ def main():
     logger.info("Evaluator".center(100))
     logger.info("*" * 100)
 
-    args: InferencingPipelineArguments = get_cli_arguments((InferPipelineArguments, TrainingArguments), InferencingPipelineArguments, True)
-    
+    args: InferencingPipelineArguments = get_cli_arguments(
+        (InferPipelineArguments, TrainingArguments), InferencingPipelineArguments, True
+    )
+
     transformed_datasets = {}
 
     start_t = time.time()
@@ -34,22 +44,26 @@ def main():
         logger.info(f"Loading and tokenizing train/dev datasets from {dataset_dir}")
         ds = load_from_disk(dataset_dir)
         if not dataset_dir.endswith("-cleaned"):
-            transformed_datasets['dirty'] = ds
+            transformed_datasets["dirty"] = ds
             logger.info(f"Dataset info (dirty):\n{ds}")
         else:
-            transformed_datasets['cleaned'] = ds
+            transformed_datasets["cleaned"] = ds
             logger.info(f"Dataset info (cleaned):\n{ds}")
-        logger.info(f"Sample of 10 transformed examples from test ds{' (cleaned):' if args.pipeline.use_cleaned_ds else ':'}\n{pformat(ds[args.pipeline.test_split_name][:10], width=200)}")
+        logger.info(
+            f"Sample of 10 transformed examples from test ds{' (cleaned):' if args.pipeline.use_cleaned_ds else ':'}\n{pformat(ds[args.pipeline.test_split_name][:10], width=200)}"
+        )
     end_load_t = time.time()
     logger.info(f"Time to load datasets: {end_load_t-start_t}")
 
     ### Metrics setup
-    metrics = evaluate.combine([
-        evaluate.load("accuracy"), 
-        ConfiguredMetric(evaluate.load("f1"), average="macro"),
-        ConfiguredMetric(evaluate.load("precision"), average="macro"),
-        ConfiguredMetric(evaluate.load("recall"), average="macro")
-    ])
+    metrics = evaluate.combine(
+        [
+            evaluate.load("accuracy"),
+            ConfiguredMetric(evaluate.load("f1"), average="macro"),
+            ConfiguredMetric(evaluate.load("precision"), average="macro"),
+            ConfiguredMetric(evaluate.load("recall"), average="macro"),
+        ]
+    )
 
     models = [
         "francisco-perez-sorrosal/distilbert-base-uncased-finetuned-with-spanish-tweets-clf",
@@ -61,7 +75,7 @@ def main():
     ]
 
     ds_label_info = ds[args.pipeline.test_split_name].features[args.pipeline.target_labels_column_name]
-    
+
     task_evaluator = evaluator("text-classification")
 
     results = []
@@ -73,7 +87,7 @@ def main():
             data=transformed_datasets[transformed_ds_id][args.pipeline.test_split_name],
             metric=metrics,
             label_column=args.pipeline.target_labels_column_name,
-            label_mapping=ds_label_info._str2int
+            label_mapping=ds_label_info._str2int,
         )
         logger.info(f"Test metrics results:\n{pformat(test_results)}")
         results.append(test_results)
@@ -81,11 +95,16 @@ def main():
     df = pd.DataFrame(results, index=models)
     df[["accuracy", "f1", "precision", "recall", "total_time_in_seconds", "samples_per_second", "latency_in_seconds"]]
     logger.info(f"Results:\n{df.head(10)}")
-    
-    plot = radar_plot(data=results, model_names=[m.split("/")[1] for m in models], invert_range=["latency_in_seconds"], config={"legend_loc": "lower right"})
+
+    plot = radar_plot(
+        data=results,
+        model_names=[m.split("/")[1] for m in models],
+        invert_range=["latency_in_seconds"],
+        config={"legend_loc": "lower right"},
+    )
     radarplot_path = os.path.join(args.train.output_dir, "spanish-tweet-models-radarplot.png")
     logger.info(f"Saving Radar plot to: {radarplot_path}")
-    plot.savefig(radarplot_path, bbox_inches='tight')
+    plot.savefig(radarplot_path, bbox_inches="tight")
 
 
 if __name__ == "__main__":

@@ -1,15 +1,14 @@
 import dataclasses
 import json
 import os
-
 from dataclasses import dataclass, field
+from typing import Any, Optional, Sequence, TypeVar
+
 from transformers import HfArgumentParser, TrainingArguments
-from typing import Any, TypeVar, Sequence, Optional
 
 from spanishclassifier import logger
 
-
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass
@@ -17,16 +16,15 @@ class TrainPipelineArguments:
 
     # Data/Model related parameters
 
-    transformed_data_dir: str = field(metadata={"help": "The dir where the transformed data is located."}, default=os.environ["TMPDIR"])
+    transformed_data_dir: str = field(
+        metadata={"help": "The dir where the transformed data is located."}, default=os.environ["TMPDIR"]
+    )
 
     dataset_config_name: str = field(
-        metadata={"help": "The particular configuration of the dataset to use"},
-        default="60-20-20"
+        metadata={"help": "The particular configuration of the dataset to use"}, default="60-20-20"
     )
 
-    use_cleaned_ds: bool = field(
-        metadata={"help": "Whether to use the cleaned version of the dataset"}, default=False
-    )
+    use_cleaned_ds: bool = field(metadata={"help": "Whether to use the cleaned version of the dataset"}, default=False)
 
     limited_record_count: Optional[int] = field(
         metadata={
@@ -74,11 +72,7 @@ class TrainPipelineArguments:
 
     dropout: float = field(
         default=0.1,
-        metadata={
-            "help": (
-                "The default dropout for."
-            )
-        },
+        metadata={"help": ("The default dropout for.")},
     )
 
     early_stopping_patience: int = field(
@@ -118,16 +112,15 @@ class InferPipelineArguments:
 
     # Data/Model related parameters
 
-    transformed_data_dir: str = field(metadata={"help": "The dir where the transformed data is located."}, default=os.environ["TMPDIR"])
+    transformed_data_dir: str = field(
+        metadata={"help": "The dir where the transformed data is located."}, default=os.environ["TMPDIR"]
+    )
 
     dataset_config_name: str = field(
-        metadata={"help": "The particular configuration of the dataset to use"},
-        default="60-20-20"
+        metadata={"help": "The particular configuration of the dataset to use"}, default="60-20-20"
     )
 
-    use_cleaned_ds: bool = field(
-        metadata={"help": "Whether to use the cleaned version of the dataset"}, default=False
-    )
+    use_cleaned_ds: bool = field(metadata={"help": "Whether to use the cleaned version of the dataset"}, default=False)
 
     limited_record_count: Optional[int] = field(
         metadata={
@@ -197,12 +190,11 @@ class InferencingPipelineArguments:
         wrapper_rep += f"\nHF-Related:\n{self.train.to_json_string()}"
         return wrapper_rep
 
+
 def get_cli_arguments(dataclasses_to_parse: Sequence[Any], args_class: type[T], print_args: bool = False) -> T:
     parser = HfArgumentParser(dataclasses_to_parse)
 
-    pipeline_args, training_args, remaining_strings = parser.parse_args_into_dataclasses(
-        return_remaining_strings=True
-    )
+    pipeline_args, training_args, remaining_strings = parser.parse_args_into_dataclasses(return_remaining_strings=True)
     cli_args = args_class(pipeline_args, training_args)
     if print_args:
         logger.info(cli_args)

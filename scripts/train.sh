@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source ${HOME}/dev/spanish-classifier-tfg/.venv/bin/activate
+# shellcheck source=/dev/null
+source "${HOME}"/dev/spanish-classifier-tfg/.venv/bin/activate
 
 MODEL_ID=${1:-"distilbert-base-uncased"}
 
@@ -25,7 +26,8 @@ CLEAN_DS="${CLEAN_DS:-false}"
 
 echo "Using cleaned DS? ${CLEAN_DS}"
 
-SUB_DIR=`echo ${MODEL} | sed -r 's/\//-/'`-finetuned-with-spanish-tweets-clf
+SUB_DIR=$(echo "${MODEL}" | sed -r 's/\//-/')-finetuned-with-spanish-tweets-clf
+echo Subdir: "${SUB_DIR}"
 if [ "${CLEAN_DS}" = true ] ; then
     SUB_DIR=${SUB_DIR}-cleaned-ds
 fi
@@ -40,7 +42,7 @@ DS_CONFIG="${DS_CONFIG:-60-20-20}"
 
 echo "DS Config: ${DS_CONFIG}"
 
-export EXP_NAME=ep_${EPOCHS}-lr_${LR}-msl_${MSL}-bs_${TRAIN_BS}-ds_config_${DS_CONFIG}_nl_3-do_04   
+export EXP_NAME=ep_${EPOCHS}-lr_${LR}-msl_${MSL}-bs_${TRAIN_BS}-ds_config_${DS_CONFIG}_nl_5-do_03
 export OUTPUT_DIR="${HOME}/dev/data/spanishclassfier_exp/${SUB_DIR}/${EXP_NAME}"
 export LOG_DEST=${OUTPUT_DIR}
 
@@ -49,11 +51,11 @@ echo "Output dir: ${OUTPUT_DIR}"
 train_cli \
         --log_level "debug" \
         --transformed_data_dir "${TMPDIR}" \
-        --dataset_config_name ${DS_CONFIG} \
-        --use_cleaned ${CLEAN_DS} \
+        --dataset_config_name "${DS_CONFIG}" \
+        --use_cleaned "${CLEAN_DS}" \
         --limited_record_count -1 \
         --output_dir "${OUTPUT_DIR}" \
-        --model_name_or_path ${MODEL} \
+        --model_name_or_path "${MODEL}" \
         --include_token_type_ids False \
         --dev_split_name dev \
         --problem_type single_label_classification \
@@ -76,6 +78,6 @@ train_cli \
         --early_stopping_patience 3 \
         --resume_from_checkpoint false \
         --save_total_limit 2 \
-        --push_to_hub ${PUSH_TO_HUB} \
-        --hub_model_id ${HF_HUB_ID} \
+        --push_to_hub "${PUSH_TO_HUB}" \
+        --hub_model_id "${HF_HUB_ID}" \
         --hub_strategy checkpoint \
