@@ -50,11 +50,11 @@ echo "DS Config: ${DS_CONFIG}"
 
 # Overfitting parameters
 
-DROPOUT="${DROPOUT:0.1}"
+DROPOUT="${DROPOUT:-0.1}"
 
 echo "DROPOUT: ${DROPOUT}"
 
-DISTIL_LAYERS="${DISTIL_LAYERS:6}"
+DISTIL_LAYERS="${DISTIL_LAYERS:-6}"
 
 echo "Distilbert Layers: ${DISTIL_LAYERS}"
 
