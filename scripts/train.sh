@@ -84,15 +84,15 @@ train_cli \
         --distil_layers "${DISTIL_LAYERS}" \
         --per_device_train_batch_size ${TRAIN_BS} \
         --per_device_eval_batch_size $(( 4*TRAIN_BS )) \
-        --logging_strategy epoch \
-        --logging_steps 500 \
-        --evaluation_strategy epoch \
-        --eval_steps 500 \
-        --save_strategy epoch \
-        --save_steps 500 \
+        --logging_strategy steps \
+        --logging_steps 100 \
+        --evaluation_strategy steps \
+        --eval_steps 100 \
+        --save_strategy steps \
+        --save_steps 100 \
         --metric_for_best_model f1 \
         --load_best_model_at_end true \
-        --early_stopping_patience 3 \
+        --early_stopping_patience 5 \
         --resume_from_checkpoint false \
         --save_total_limit 2 \
         --push_to_hub "${PUSH_TO_HUB}" \

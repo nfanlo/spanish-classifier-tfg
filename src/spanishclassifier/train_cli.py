@@ -6,7 +6,10 @@ from pprint import pformat
 
 import evaluate
 import numpy as np
+import pandas as pd
+import torch
 from datasets import DatasetDict, load_from_disk
+from torch.nn.functional import cross_entropy, softmax
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -25,6 +28,9 @@ from spanishclassifier.utils.cli import (
 )
 from spanishclassifier.utils.metrics import ConfiguredMetric
 from spanishclassifier.utils.model import build_model_extra_config
+
+pd.set_option("display.max_columns", 10)
+pd.set_option("display.width", 1000)
 
 
 class MetricsSaverCallback(TrainerCallback):
@@ -169,12 +175,48 @@ def main():
         resume_from_checkpoint = True
 
     logger.warning(f"Resuming from the last checkpoint: {resume_from_checkpoint}")
-    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+    training_output = trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+    logger.info(f"Training output:\n{pformat(training_output.metrics)}")
+
+    def forward_pass_with_label(batch):
+        inputs = {k: v.to(trainer.model.device) for k, v in batch.items() if k in tokenizer.model_input_names}
+        with torch.no_grad():
+            output = trainer.model(**inputs)
+            # logger.info(output.logits)
+            probabilities = torch.softmax(output.logits, dim=-1)
+            # logger.info(probabilities)
+            pred_label = torch.argmax(output.logits, axis=-1)
+            loss = cross_entropy(
+                output.logits, batch[args.pipeline.target_labels_column_name].to(trainer.model.device), reduction="none"
+            )
+        return {
+            "loss": loss.cpu().numpy(),
+            "predicted_labels": pred_label.cpu().numpy(),
+            "probabilities": probabilities.cpu().numpy(),
+        }
+
+    def label_int2str(row):
+        return dev_tokenized_ds.features["labels"].int2str(row)
+
+    dev_tokenized_ds.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
+    dev_tokenized_ds_with_predictions = dev_tokenized_ds.map(
+        forward_pass_with_label, batched=True, batch_size=32, load_from_cache_file=False
+    )
+
+    dev_tokenized_ds_with_predictions.set_format("pandas")
+    cols = ["text", "labels", "predicted_labels", "loss", "probabilities"]
+    logger.info(dev_tokenized_ds_with_predictions[:3])
+    dev_df = dev_tokenized_ds_with_predictions[:][cols]
+    dev_df["label"] = dev_df["labels"].apply(label_int2str)
+    dev_df["predicted_label"] = dev_df["predicted_labels"].apply(label_int2str)
+    logger.info(f"Examples with Highest losses:\n{dev_df.sort_values('loss', ascending=False).head(30)}")
+    logger.info(f"Examples with Smallest losses:\n{dev_df.sort_values('loss', ascending=True).head(30)}")
 
     if not args.train.push_to_hub and trainer.state.best_model_checkpoint is not None:
         best_model_dest_path = f"{args.train.output_dir}/best_model"
         logger.info(f"Copying best model from {trainer.state.best_model_checkpoint} to {best_model_dest_path}")
         copy_tree(trainer.state.best_model_checkpoint, best_model_dest_path)
+        dev_df.to_csv(os.path.join(best_model_dest_path, "dev_predictions.tsv"), sep="\t")
         # logger.info(f"Saving tokenizer to {best_model_dest_path}")
         # tokenizer.save_pretrained(best_model_dest_path)
 
