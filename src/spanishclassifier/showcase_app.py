@@ -15,8 +15,6 @@ from spanishclassifier.utils.filters import (
     remove_urls,
 )
 
-openai.api_key = "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"
-
 st.sidebar.markdown("## Models loaded")
 
 
@@ -58,10 +56,14 @@ if "pipelines" not in st.session_state:
 
 
 def update_model(
+    local_model_id,
     model_id,
 ):
     st.session_state.pipelines = []
     if not load_all_models:
+        if local_model_id:
+            model_id = local_model_id
+        st.text(f"Loading model {model_id}")
         pipe = pipeline(
             "text-classification",
             model=AutoModelForSequenceClassification.from_pretrained(model_id),
@@ -89,7 +91,15 @@ def update_model(
 
 
 model_id = st.selectbox(f"Choose a model {load_all_models}", models)
-st.button("Load model/s", on_click=update_model, args=(model_id,))
+local_model_id = st.text_input(f"Choose a model from local disk")
+st.button(
+    "Load model/s",
+    on_click=update_model,
+    args=(
+        local_model_id,
+        model_id,
+    ),
+)
 st.write("Last Updated = ", st.session_state.last_updated)
 
 
@@ -97,6 +107,7 @@ form = st.form(key="sentiment-form")
 tweet_text = form.text_area("Enter your tweet text")
 clean_input = form.checkbox("Clean input text?")
 ask_chatgpt = form.checkbox("Ask ChatGPT too?")
+openai_key = form.text_input("OpenAI Key")
 submit = form.form_submit_button("Submit")
 
 if submit:
@@ -126,6 +137,7 @@ if submit:
             st.error(f"{label} sentiment (score: {score})")
 
     if ask_chatgpt:
+        openai.api_key = openai_key
         prompt = f"""
         Classify the sentiment of the following tweet text into positive (P), neutral (NEU) or negative (N).
         The tweet text will appear after the ":" symbol at the end of the paragraph. The result will contain
