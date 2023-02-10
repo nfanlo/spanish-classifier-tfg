@@ -1,6 +1,6 @@
 import os
 import time
-from pprint import pprint
+from pprint import pformat
 
 import evaluate
 from datasets import load_from_disk
@@ -35,7 +35,9 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.pipeline.model_name_or_path)
 
     def tokenize_function(examples):
-        return tokenizer(examples["text"])  # , padding="max_length", truncation=True, max_length=172)
+        return tokenizer(
+            examples["text"]
+        )  # , padding="max_length", truncation=True, max_length=args.pipeline.max_seq_length)
 
     start_t = time.time()
     transformed_ds_filename = (
@@ -44,14 +46,15 @@ def main():
         else f"{args.pipeline.dataset_config_name}-cleaned"
     )
     dataset_dir = os.path.join(args.pipeline.transformed_data_dir, transformed_ds_filename)
-    logger.info(f"Loading and tokenizing train/dev datasets from {dataset_dir}")
+    logger.info(f"Loading and tokenizing eval (dev/test) dataset splits from {dataset_dir}")
     ds = load_from_disk(dataset_dir)
     end_load_t = time.time()
     logger.info(f"Time to load dataset: {end_load_t-start_t}")
     logger.info(f"Dataset info:\n{ds}")
 
     logger.info(
-        f"Sample of 10 transformed examples from test ds{' (cleaned):' if args.pipeline.use_cleaned_ds else ':'}\n{pprint(ds[args.pipeline.test_split_name][:10], width=20)}"
+        f"Sample of 10 transformed examples from test ds ({args.pipeline.test_split_name} split) \
+        {' (cleaned):' if args.pipeline.use_cleaned_ds else ':'}\n{pformat(ds[args.pipeline.test_split_name][:10], width=200)}"
     )
 
     test_examples = len(ds[args.pipeline.test_split_name])

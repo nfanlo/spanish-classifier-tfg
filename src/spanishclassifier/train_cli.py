@@ -14,6 +14,7 @@ from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
     AutoTokenizer,
+    DataCollatorWithPadding,
     EarlyStoppingCallback,
     Trainer,
     TrainerCallback,
@@ -121,7 +122,9 @@ def main():
     config.seq_classif_dropout = args.pipeline.dropout
     config.n_layers = args.pipeline.distil_layers
 
-    model = AutoModelForSequenceClassification.from_pretrained(args.pipeline.model_name_or_path, config=config)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        args.pipeline.model_name_or_path, config=config, ignore_mismatched_sizes=True
+    )
 
     logger.info(f"Model config\n{model.config}")
 
@@ -160,6 +163,7 @@ def main():
         args=args.train,
         train_dataset=train_tokenized_ds,
         eval_dataset=dev_tokenized_ds,
+        # data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
         compute_metrics=compute_metrics,
         callbacks=callbacks,
     )

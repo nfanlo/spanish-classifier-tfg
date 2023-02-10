@@ -86,3 +86,21 @@ If you want to run linting before commit, stage files and then run:
 
 NOTE: If at some point some of the linting errors slows down our goal (e.g. typing with mypy or docstring) we can decide to relax the rules.
 
+# Usage
+
+## Transformed Dataset Creation
+
+Allows to move from the raw datasets in the `/dataset` directory (e.g. `60-20-20/` split) to a properly transformed dataset ready to be used in the `${TEMPDIR}/<split>` dir.
+This transformed dataset will be used by the `train.sh` and `infer.sh` scripts.
+
+CLEAN_DS=true DS_CONFIG=80-10-10 ./scripts/dataset.sh false
+
+## Infer
+
+Uer the `infer.sh` script parametrizing with env vars and 2 (the first one MANDATORY) arguments:
+1. Experiment id to use
+2. Model id to use
+
+```sh
+CLEAN_DS=true DS_CONFIG=80-10-10 ./scripts/infer.sh ep_2-lr_5e-5-msl_72-bs_8-ds_config_80-10-10-nl_5-do_0.2 dccuchile/distilbert-base-spanish-uncased
+```

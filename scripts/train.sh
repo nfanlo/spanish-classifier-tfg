@@ -12,6 +12,8 @@ case ${MODEL_ID} in
         MODEL="distilbert-base-multilingual-cased";;
     distilbeto)
         MODEL="dccuchile/distilbert-base-spanish-uncased";;
+    distilbetomldoc)
+        MODEL="dccuchile/distilbert-base-spanish-uncased-finetuned-mldoc";;
     *)
         MODEL=${MODEL_ID};;
 esac
@@ -92,7 +94,7 @@ train_cli \
         --save_steps 100 \
         --metric_for_best_model f1 \
         --load_best_model_at_end true \
-        --early_stopping_patience 5 \
+        --early_stopping_patience 10 \
         --resume_from_checkpoint false \
         --save_total_limit 2 \
         --push_to_hub "${PUSH_TO_HUB}" \
