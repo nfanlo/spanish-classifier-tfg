@@ -164,6 +164,7 @@ def main():
     }
     logger.info("Loading dataset")
     if not args.pipeline.use_cached_ds:
+        logger.info("Disabling caching!!!")
         datasets.disable_caching()
     ds = load_dataset("./src/spanishclassifier/dataset.py", args.pipeline.dataset_config_name, **config_kwargs)
     logger.info(f"Dataset summary:\n{ds}")
